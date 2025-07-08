@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "api/amend.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/amend",
+      "dest": "api/amend.js"
+    }
+  ]
+}
