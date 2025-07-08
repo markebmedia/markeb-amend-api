@@ -1,5 +1,7 @@
 // api/amend.js
-import table from '../lib/airtable.js';
+import Airtable from 'airtable';
+
+const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID);
 
 export default async function handler(req, res) {
   // CORS headers
@@ -36,12 +38,30 @@ export default async function handler(req, res) {
   }
 
   try {
-    const record = await table.create({
+    // Look up Project Address linked record from Active Bookings table by tracking code
+    const matchingRecords = await base('Active Bookings')
+      .select({
+        filterByFormula: `{Tracking Code} = "${trackingCode}"`
+      })
+      .firstPage();
+
+    if (matchingRecords.length === 0) {
+      return res.status(404).json({ message: 'No matching active booking found for this tracking code' });
+    }
+
+    const projectAddressLinkedRecordId = matchingRecords[0].get('Project Address')?.[0];
+    if (!projectAddressLinkedRecordId) {
+      return res.status(404).json({ message: 'No linked Project Address found for this tracking code' });
+    }
+
+    // Create amend request with linked Project Address record
+    const record = await base('AmendRequests').create({
       'Customer Name': customerName,
       'Email Address': email,
       'Tracking Code': trackingCode,
       'Amendment Type': amendmentTypeArray,
       'Amendment Description': amendmentDescription,
+      'Project Address': [projectAddressLinkedRecordId],
       Status: 'New'
     });
 
@@ -49,11 +69,13 @@ export default async function handler(req, res) {
       message: 'Amendment request submitted successfully',
       id: record.id
     });
+
   } catch (err) {
     console.error('Error creating Airtable record:', err);
     return res.status(500).json({ message: 'Server Error' });
   }
 }
+
 
 
 
