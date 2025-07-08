@@ -2,15 +2,18 @@
 import table from '../lib/airtable';
 
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
+  // Extract body
   const {
     customerName,
     email,
@@ -19,6 +22,7 @@ export default async function handler(req, res) {
     amendmentDescription
   } = req.body;
 
+  // Validate required fields
   if (
     !customerName ||
     !email ||
@@ -32,7 +36,7 @@ export default async function handler(req, res) {
   try {
     const record = await table.create({
       'Customer Name':         customerName,
-      Email:                   email,
+      'Email Address':         email,               // <- replace with your exact field name
       'Tracking Code':         trackingCode,
       'Amendment Type':        amendmentType,
       'Amendment Description': amendmentDescription,
@@ -48,4 +52,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Server Error' });
   }
 }
+
 
