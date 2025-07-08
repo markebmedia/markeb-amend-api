@@ -33,12 +33,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing fields in request body' });
   }
 
+  // Ensure amendmentType is an array
+  let amendmentTypeArray = amendmentType;
+  if (!Array.isArray(amendmentType)) {
+    // If it's a string, split by comma and trim whitespace
+    amendmentTypeArray = amendmentType.split(',').map(s => s.trim());
+  }
+
   try {
     const record = await table.create({
       'Customer Name':         customerName,
-      'Email Address':         email,               // <- replace with your exact field name
+      'Email Address':         email,               // exact Airtable field name
       'Tracking Code':         trackingCode,
-      'Amendment Type':        amendmentType,
+      'Amendment Type':        amendmentTypeArray,  // send as array for multi-select
       'Amendment Description': amendmentDescription,
       Status:                  'New'
     });
