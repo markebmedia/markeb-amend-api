@@ -1,7 +1,8 @@
-// api/amend.js
 import Airtable from 'airtable';
 
 const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID);
+const amendTable = base(process.env.AIRTABLE_AMEND_TABLE_NAME);           // e.g. 'AmendRequests'
+const bookingTable = base(process.env.AIRTABLE_BOOKINGS_TABLE_NAME);     // e.g. 'Active Bookings'
 
 export default async function handler(req, res) {
   // CORS headers
@@ -22,46 +23,40 @@ export default async function handler(req, res) {
     amendmentDescription
   } = req.body;
 
-  if (
-    !customerName ||
-    !email ||
-    !trackingCode ||
-    !amendmentType ||
-    !amendmentDescription
-  ) {
+  if (!customerName || !email || !trackingCode || !amendmentType || !amendmentDescription) {
     return res.status(400).json({ message: 'Missing fields in request body' });
   }
 
+  // Convert amendmentType to array if needed
   let amendmentTypeArray = amendmentType;
   if (!Array.isArray(amendmentType)) {
     amendmentTypeArray = amendmentType.split(',').map(s => s.trim());
   }
 
   try {
-    // Look up Project Address linked record from Active Bookings table by tracking code
-    const matchingRecords = await base('Active Bookings')
-      .select({
-        filterByFormula: `{Tracking Code} = "${trackingCode}"`
-      })
-      .firstPage();
+    // Lookup project address from Active Bookings using tracking code
+    const bookingRecords = await bookingTable.select({
+      filterByFormula: `{Tracking Code} = "${trackingCode}"`
+    }).firstPage();
 
-    if (matchingRecords.length === 0) {
-      return res.status(404).json({ message: 'No matching active booking found for this tracking code' });
+    if (!bookingRecords.length) {
+      return res.status(404).json({ message: 'Tracking code not found in Active Bookings' });
     }
 
-    const projectAddressLinkedRecordId = matchingRecords[0].get('Project Address')?.[0];
-    if (!projectAddressLinkedRecordId) {
-      return res.status(404).json({ message: 'No linked Project Address found for this tracking code' });
+    const projectAddress = bookingRecords[0].get('Project Address');
+
+    if (!projectAddress) {
+      return res.status(404).json({ message: 'Project Address not found for this tracking code' });
     }
 
-    // Create amend request with linked Project Address record
-    const record = await base('AmendRequests').create({
+    // Create amend request record with looked up project address
+    const record = await amendTable.create({
       'Customer Name': customerName,
       'Email Address': email,
       'Tracking Code': trackingCode,
+      'Project Address': projectAddress,
       'Amendment Type': amendmentTypeArray,
       'Amendment Description': amendmentDescription,
-      'Project Address': [projectAddressLinkedRecordId],
       Status: 'New'
     });
 
