@@ -1,5 +1,5 @@
 // api/amend.js
-import table from '../lib/airtable.js';  // Ensure this path is correct and file exists
+import table from '../lib/airtable.js';  // Make sure this path and file exist
 
 export default async function handler(req, res) {
   // CORS headers
@@ -41,14 +41,12 @@ export default async function handler(req, res) {
 
   try {
     const record = await table.create({
-      fields: {
-        'Customer Name':         customerName,
-        'Email Address':         email,               // use exact Airtable field names
-        'Tracking Code':         trackingCode,
-        'Amendment Type':        amendmentTypeArray,  // multi-select array
-        'Amendment Description': amendmentDescription,
-        'Status':                'New'
-      }
+      'Customer Name':         customerName,
+      'Email Address':         email,
+      'Tracking Code':         trackingCode,
+      'Amendment Type':        amendmentTypeArray,
+      'Amendment Description': amendmentDescription,
+      Status:                  'New'
     });
 
     return res.status(200).json({
@@ -60,6 +58,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Server Error' });
   }
 }
-
 
 
