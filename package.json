@@ -1,7 +1,6 @@
 {
   "name": "markeb-amend-api",
   "version": "1.0.0",
-  "type": "module",
   "main": "index.js",
   "directories": {
     "lib": "lib"
@@ -16,5 +15,4 @@
   "dependencies": {
     "airtable": "^0.12.2"
   }
-}
-
+} - saw in this. give me the full code 
