@@ -1,5 +1,5 @@
 // api/amend.js
-import table from '../lib/airtable.js';  // note the .js extension
+import table from '../lib/airtable.js';
 
 export default async function handler(req, res) {
   // CORS headers
@@ -8,12 +8,10 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  // Extract body
   const {
     customerName,
     email,
@@ -22,7 +20,6 @@ export default async function handler(req, res) {
     amendmentDescription
   } = req.body;
 
-  // Validate required fields
   if (
     !customerName ||
     !email ||
@@ -33,7 +30,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing fields in request body' });
   }
 
-  // Ensure amendmentType is an array for Airtable multi-select
   let amendmentTypeArray = amendmentType;
   if (!Array.isArray(amendmentType)) {
     amendmentTypeArray = amendmentType.split(',').map(s => s.trim());
@@ -41,14 +37,12 @@ export default async function handler(req, res) {
 
   try {
     const record = await table.create({
-      fields: {
-        'Customer Name': customerName,
-        'Email Address': email,               // Make sure this matches your Airtable field exactly
-        'Tracking Code': trackingCode,
-        'Amendment Type': amendmentTypeArray, // Multi-select field expects array
-        'Amendment Description': amendmentDescription,
-        Status: 'New'
-      }
+      'Customer Name': customerName,
+      'Email Address': email,
+      'Tracking Code': trackingCode,
+      'Amendment Type': amendmentTypeArray,
+      'Amendment Description': amendmentDescription,
+      Status: 'New'
     });
 
     return res.status(200).json({
