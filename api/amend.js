@@ -1,4 +1,4 @@
-import { AirtableConnect } from '../../lib/airtable';
+import { AirtableConnect } from '../lib/airtable';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
