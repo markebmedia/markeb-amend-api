@@ -1,5 +1,5 @@
 // api/amend.js
-import table from '../lib/airtable';
+import table from '../lib/airtable.js';  // Ensure this path is correct and file exists
 
 export default async function handler(req, res) {
   // CORS headers
@@ -33,21 +33,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing fields in request body' });
   }
 
-  // Ensure amendmentType is an array
+  // Ensure amendmentType is an array (for Airtable multi-select)
   let amendmentTypeArray = amendmentType;
   if (!Array.isArray(amendmentType)) {
-    // If it's a string, split by comma and trim whitespace
     amendmentTypeArray = amendmentType.split(',').map(s => s.trim());
   }
 
   try {
     const record = await table.create({
-      'Customer Name':         customerName,
-      'Email Address':         email,               // exact Airtable field name
-      'Tracking Code':         trackingCode,
-      'Amendment Type':        amendmentTypeArray,  // send as array for multi-select
-      'Amendment Description': amendmentDescription,
-      Status:                  'New'
+      fields: {
+        'Customer Name':         customerName,
+        'Email Address':         email,               // use exact Airtable field names
+        'Tracking Code':         trackingCode,
+        'Amendment Type':        amendmentTypeArray,  // multi-select array
+        'Amendment Description': amendmentDescription,
+        'Status':                'New'
+      }
     });
 
     return res.status(200).json({
@@ -59,5 +60,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Server Error' });
   }
 }
+
 
 
