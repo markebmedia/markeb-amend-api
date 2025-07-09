@@ -1,5 +1,8 @@
-// api/amend.js
-import table from '../lib/airtable.js';
+import Airtable from 'airtable';
+import table from '../lib/airtable.js'; // This is your AmendRequests table instance
+
+// Initialize Airtable base to query other tables
+const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID);
 
 export default async function handler(req, res) {
   // CORS headers
@@ -36,10 +39,23 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Lookup project address in Active Bookings by tracking code
+    const bookingRecords = await base('Active Bookings').select({
+      filterByFormula: `{Tracking Code} = "${trackingCode}"`
+    }).firstPage();
+
+    if (bookingRecords.length === 0) {
+      return res.status(404).json({ message: 'No booking found for this tracking code' });
+    }
+
+    const projectAddress = bookingRecords[0].get('Project Address') || '';
+
+    // Create amend request with project address included
     const record = await table.create({
       'Customer Name': customerName,
       'Email Address': email,
       'Tracking Code': trackingCode,
+      'Project Address': projectAddress,
       'Amendment Type': amendmentTypeArray,
       'Amendment Description': amendmentDescription,
       Status: 'New'
@@ -54,9 +70,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Server Error' });
   }
 }
-
-
-
-
-
-
