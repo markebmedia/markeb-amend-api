@@ -50,6 +50,18 @@ export default async function handler(req, res) {
 
     const projectAddress = bookingRecords[0].get('Project Address') || '';
 
+    // ✅ Check if this tracking code already has 2 amend requests
+    const existingAmends = await table.select({
+      filterByFormula: `{Tracking Code} = "${trackingCode}"`,
+      fields: ['Tracking Code']
+    }).firstPage();
+
+    if (existingAmends.length >= 2) {
+      return res.status(400).json({
+        message: 'This tracking code has already been used for 2 amendment requests.'
+      });
+    }
+
     // Create amend request with project address included
     const record = await table.create({
       'Customer Name': customerName,
